@@ -21,13 +21,13 @@ trait OptionProcessor[Options <: Product] {
   type Matcher = PartialFunction[Result, Result]
   
   val base: Matcher = {
-    case r @ Triple(_, _, Nil) => r
+    case r @ (_, _, Nil) => r
   }
   
   val defaults: Matcher = {
-    case Triple(opts, args, "--" :: rest) => Triple(opts, rest.reverse ++ args, Nil)
-    case Triple(opts, args, bogusOpt) if bogusOpt(0) == "-" => throw new RuntimeException(s"unrecognized option $bogusOpt")
-    case Triple(opts, args, arg :: rest) => Triple(opts, arg :: args, rest)
+    case (opts, args, "--" :: rest) => (opts, rest.reverse ++ args, Nil)
+    case (opts, args, bogusOpt) if bogusOpt(0) == "-" => throw new RuntimeException(s"unrecognized option $bogusOpt")
+    case (opts, args, arg :: rest) => (opts, arg :: args, rest)
   }
   
   def optionMatchers: List[Matcher] = Nil
