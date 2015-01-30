@@ -32,7 +32,15 @@ trait OptionProcessor[Options <: Product] {
   
   def optionMatchers: List[Matcher] = Nil
   
+  def emptyOptions: Options
+  
   lazy val optionMatcher: Matcher = (base :: optionMatchers).foldRight(defaults)((a, b) => a orElse b)
+  
+  def parse(args: Array[String]): Pair[Options, List[String]] = {
+    saturate(Triple(emptyOptions, List[String](), args.toList)) match {
+      case (opts, params, _) => (opts, params.reverse)
+    }
+  }
   
   private def saturate(r: Result): Result = {
     optionMatcher(r) match {
