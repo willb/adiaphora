@@ -17,20 +17,27 @@
 package com.freevariable.adiaphora
 
 trait OptionProcessor[Options <: Product] {
-  case class Result(options: Options, args: List[String], inputs: List[String]) {}
+  type Result = Triple[Options, List[String], List[String]]
   type Matcher = PartialFunction[Result, Result]
   
   val base: Matcher = {
-    case r @ Result(_, _, Nil) => r
+    case r @ Triple(_, _, Nil) => r
   }
   
   val defaults: Matcher = {
-    case r @ Result(opts, args, "--" :: rest) => Result(opts, args ++ rest, Nil)
-    case r @ Result(opts, args, bogusOpt) if bogusOpt(0) == "-" => throw new RuntimeException(s"unrecognized option $bogusOpt")
-    case r @ Result(opts, args, arg :: rest) => Result(opts, args ++ List(arg), Nil)
+    case Triple(opts, args, "--" :: rest) => Triple(opts, rest.reverse ++ args, Nil)
+    case Triple(opts, args, bogusOpt) if bogusOpt(0) == "-" => throw new RuntimeException(s"unrecognized option $bogusOpt")
+    case Triple(opts, args, arg :: rest) => Triple(opts, arg :: args, rest)
   }
   
   def optionMatchers: List[Matcher] = Nil
   
-  def optionMatcher: Matcher = (base :: optionMatchers).foldRight(defaults)((a, b) => a orElse b)
+  lazy val optionMatcher: Matcher = (base :: optionMatchers).foldRight(defaults)((a, b) => a orElse b)
+  
+  private def saturate(r: Result): Result = {
+    optionMatcher(r) match {
+      case x if x == r => r
+      case y => saturate(y)
+    }
+  }
 }
