@@ -11,12 +11,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.c
+ * limitations under the License.
  */
 
 package com.freevariable.adiaphora
 
-trait OptionProcessor[Options <: Product] {
+trait OptionProcessing[Options <: Product] {
   type Result = Triple[Options, List[String], List[String]]
   type Matcher = PartialFunction[Result, Result]
   
@@ -47,5 +47,19 @@ trait OptionProcessor[Options <: Product] {
       case x if x == r => r
       case y => saturate(y)
     }
+  }
+}
+
+class BasicOptionProcessor[Options <: Product](
+  empty: Options, 
+  handler: PartialFunction[Triple[Options, List[String], List[String]], Triple[Options, List[String], List[String]]]
+  ) extends OptionProcessing[Options] {
+  override def optionMatchers = List(handler)
+  override def emptyOptions = empty
+}
+
+object Basic {
+  def apply[Options <: Product](empty: Options)(handler: PartialFunction[Triple[Options, List[String], List[String]], Triple[Options, List[String], List[String]]]): BasicOptionProcessor[Options] = {
+    new BasicOptionProcessor(empty, handler)
   }
 }
